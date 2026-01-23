@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserType } from './types/user';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -8,10 +9,12 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 export class UsersService {
   private users: UserType[] = []; // -> just for test
 
-  create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto) {
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const newUser: UserType = {
       id: uuidv4(),
       ...createUserDto,
+      password: hashedPassword,
       createdAt: new Date(),
     };
     this.users.push(newUser);
@@ -43,19 +46,26 @@ export class UsersService {
     };
   }
 
-  update(id: string, updateData: UpdateUserDto) {
+  async update(id: string, updateData: UpdateUserDto) {
     const userIndex = this.users.findIndex((user) => user.id === id);
+
     if (userIndex === -1) {
       return {
         success: false,
         message: 'User not found',
       };
     }
+
+    const updatedData = updateData.password
+      ? { ...updateData, password: await bcrypt.hash(updateData.password, 10) }
+      : updateData;
+
     this.users[userIndex] = {
       ...this.users[userIndex],
-      ...updateData,
+      ...updatedData,
       updatedAt: new Date(),
     } as UserType;
+
     return {
       success: true,
       message: 'User updated successfully',
