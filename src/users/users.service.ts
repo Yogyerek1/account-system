@@ -13,41 +13,50 @@ export class UsersService {
       ...createUserDto,
       createdAt: new Date(),
     };
-
     this.users.push(newUser);
-
     return {
+      success: true,
       message: 'User created successfully',
       data: newUser,
     };
   }
 
   findAll() {
-    return this.users;
+    return {
+      success: true,
+      data: this.users,
+    };
   }
 
   findOne(id: number) {
     const user = this.users.find((user) => user.id === id);
     if (!user) {
-      return { message: 'User not found' };
+      return {
+        success: false,
+        message: 'User not found',
+      };
     }
-    return user;
+    return {
+      success: true,
+      data: user,
+    };
   }
 
   update(id: number, updateData: UpdateUserDto) {
     const userIndex = this.users.findIndex((user) => user.id === id);
-
     if (userIndex === -1) {
-      return { message: 'User not found' };
+      return {
+        success: false,
+        message: 'User not found',
+      };
     }
-
     this.users[userIndex] = {
       ...this.users[userIndex],
       ...updateData,
       updatedAt: new Date(),
     } as UserType;
-
     return {
+      success: true,
       message: 'User updated successfully',
       data: this.users[userIndex],
     };
@@ -55,13 +64,16 @@ export class UsersService {
 
   remove(id: number) {
     const userExists = this.users.find((user) => user.id === id);
-
     if (!userExists) {
-      return { message: 'User not found' };
+      return {
+        success: false,
+        message: 'User not found',
+      };
     }
-
     this.users = this.users.filter((user) => user.id !== id);
-
-    return { message: 'User deleted' };
+    return {
+      success: true,
+      message: 'User deleted successfully',
+    };
   }
 }
