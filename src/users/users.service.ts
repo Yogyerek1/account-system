@@ -32,4 +32,20 @@ export class UsersService {
     }
     return user;
   }
+
+  update(id: number) {
+    return id;
+  }
+
+  remove(id: number) {
+    const userExists = this.users.find((user) => user.id === id);
+
+    if (!userExists) {
+      return { message: 'User not found' };
+    }
+
+    this.users = this.users.filter((user) => user.id !== id);
+
+    return { message: 'User deleted' };
+  }
 }
