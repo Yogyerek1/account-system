@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserType } from './types/user';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -33,8 +34,23 @@ export class UsersService {
     return user;
   }
 
-  update(id: number) {
-    return id;
+  update(id: number, updateData: UpdateUserDto) {
+    const userIndex = this.users.findIndex((user) => user.id === id);
+
+    if (userIndex === -1) {
+      return { message: 'User not found' };
+    }
+
+    this.users[userIndex] = {
+      ...this.users[userIndex],
+      ...updateData,
+      updatedAt: new Date(),
+    } as UserType;
+
+    return {
+      message: 'User updated successfully',
+      data: this.users[userIndex],
+    };
   }
 
   remove(id: number) {
