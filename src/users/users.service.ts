@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './dtos/create-user.dto';
 import { UserType } from './types/user';
-import { UpdateUserDto } from './dtos/update-user.dto';
+import { LoginUserDto, CreateUserDto, UpdateUserDto } from './dtos';
 
 @Injectable()
 export class UsersService {
@@ -71,6 +70,10 @@ export class UsersService {
       message: 'User updated successfully',
       data: this.users[userIndex],
     };
+  }
+
+  login(loginUserDto: LoginUserDto) {
+    return loginUserDto;
   }
 
   remove(id: string) {
