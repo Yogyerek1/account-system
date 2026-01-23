@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserType } from './types/user';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -9,7 +10,7 @@ export class UsersService {
 
   create(createUserDto: CreateUserDto) {
     const newUser: UserType = {
-      id: this.users.length + 1,
+      id: uuidv4(),
       ...createUserDto,
       createdAt: new Date(),
     };
@@ -28,7 +29,7 @@ export class UsersService {
     };
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     const user = this.users.find((user) => user.id === id);
     if (!user) {
       return {
@@ -42,7 +43,7 @@ export class UsersService {
     };
   }
 
-  update(id: number, updateData: UpdateUserDto) {
+  update(id: string, updateData: UpdateUserDto) {
     const userIndex = this.users.findIndex((user) => user.id === id);
     if (userIndex === -1) {
       return {
@@ -62,7 +63,7 @@ export class UsersService {
     };
   }
 
-  remove(id: number) {
+  remove(id: string) {
     const userExists = this.users.find((user) => user.id === id);
     if (!userExists) {
       return {
