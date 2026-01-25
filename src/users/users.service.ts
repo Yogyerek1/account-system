@@ -5,10 +5,14 @@ import { LoginUserDto, CreateUserDto, UpdateUserDto } from './dtos';
 import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private authService: AuthService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseType> {
     const userExists = await this.userModel.findOne({
@@ -103,12 +107,18 @@ export class UsersService {
       return { success: false, message: 'Invalid credentials' };
     }
 
+    const token = await this.authService.generateToken(
+      user._id.toString(),
+      user.username,
+    );
+
     return {
       success: true,
       message: 'successfully logged in',
       username: user.username,
       email: user.email,
       id: user._id.toString(),
+      acces_token: token.access_token,
     };
   }
 
