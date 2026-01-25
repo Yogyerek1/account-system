@@ -1,53 +1,59 @@
 import { Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
-import { UserType, ResponseType } from './types/index';
+import { ResponseType } from './types/index';
 import { LoginUserDto, CreateUserDto, UpdateUserDto } from './dtos';
+import { User } from './schemas/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class UsersService {
-  private users: UserType[] = []; // -> just for test
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseType> {
-    const userExists = this.users.find(
-      (user) => user.username === createUserDto.username,
-    );
+    const userExists = await this.userModel.findOne({
+      username: createUserDto.username,
+    });
     if (userExists) {
       return { success: false, message: 'Invalid credentials' };
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser: UserType = {
-      id: uuidv4(),
-      ...createUserDto,
+
+    const newUser = await this.userModel.create({
+      username: createUserDto.username,
+      email: createUserDto.email,
       password: hashedPassword,
-      createdAt: new Date(),
-    };
-    this.users.push(newUser);
+    });
+
     return {
       success: true,
       message: 'User created successfully',
       username: newUser.username,
       email: newUser.email,
-      id: newUser.id,
+      id: newUser._id.toString(),
     };
   }
 
-  findAll(): ResponseType {
+  async findAll(): Promise<ResponseType> {
+    const users = await this.userModel.find().select('-password').exec();
+
     return {
       success: true,
-      users: this.users,
+      users: users,
     };
   }
 
-  findOne(id: string): ResponseType {
-    const user = this.users.find((user) => user.id === id);
+  async findOne(id: string): Promise<ResponseType> {
+    const user = await this.userModel.findById(id).select('-password').exec();
+
     if (!user) {
       return {
         success: false,
         message: 'Invalid credentials',
       };
     }
+
     return {
       success: true,
       user: user,
@@ -55,44 +61,44 @@ export class UsersService {
   }
 
   async update(id: string, updateData: UpdateUserDto): Promise<ResponseType> {
-    const userIndex = this.users.findIndex((user) => user.id === id);
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
 
-    if (userIndex === -1) {
+    const updateUser = await this.userModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .select('-password')
+      .exec();
+
+    if (!updateUser) {
       return {
         success: false,
         message: 'Invalid credentials',
       };
     }
 
-    const updatedData = updateData.password
-      ? { ...updateData, password: await bcrypt.hash(updateData.password, 10) }
-      : updateData;
-
-    this.users[userIndex] = {
-      ...this.users[userIndex],
-      ...updatedData,
-      updatedAt: new Date(),
-    } as UserType;
-
     return {
       success: true,
       message: 'User updated successfully',
-      username: this.users[userIndex].username,
-      email: this.users[userIndex].email,
-      id: this.users[userIndex].id,
+      username: updateUser.username,
+      email: updateUser.email,
+      id: updateUser._id.toString(),
     };
   }
 
   async login(loginUserDto: LoginUserDto): Promise<ResponseType> {
-    const user = this.users.find(
-      (user) => user.username === loginUserDto.username,
-    );
+    const user = await this.userModel
+      .findOne({
+        username: loginUserDto.username,
+      })
+      .exec();
 
     if (!user) {
       return { success: false, message: 'Invalid credentials' };
     }
 
     const match = await bcrypt.compare(loginUserDto.password, user.password);
+
     if (!match) {
       return { success: false, message: 'Invalid credentials' };
     }
@@ -102,19 +108,20 @@ export class UsersService {
       message: 'successfully logged in',
       username: user.username,
       email: user.email,
-      id: user.id,
+      id: user._id.toString(),
     };
   }
 
-  remove(id: string): ResponseType {
-    const userExists = this.users.find((user) => user.id === id);
-    if (!userExists) {
+  async remove(id: string): Promise<ResponseType> {
+    const result = await this.userModel.findByIdAndDelete(id).exec();
+
+    if (!result) {
       return {
         success: false,
         message: 'Invalid credentials',
       };
     }
-    this.users = this.users.filter((user) => user.id !== id);
+
     return {
       success: true,
       message: 'User deleted successfully',
