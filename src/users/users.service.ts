@@ -107,7 +107,7 @@ export class UsersService {
       return { success: false, message: 'Invalid credentials' };
     }
 
-    const token = await this.authService.generateToken(
+    const token = this.authService.generateToken(
       user._id.toString(),
       user.username,
     );
@@ -118,7 +118,7 @@ export class UsersService {
       username: user.username,
       email: user.email,
       id: user._id.toString(),
-      acces_token: token.access_token,
+      access_token: token.access_token,
     };
   }
 

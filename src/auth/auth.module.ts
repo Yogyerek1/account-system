@@ -12,9 +12,9 @@ import { AuthService } from './auth.service';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         return {
-          secret: configService.get('JWT_SECRET'),
+          secret: configService.getOrThrow('JWT_SECRET'),
           signOptions: {
-            expiresIn: configService.get('JWT_EXPIRES_IN'),
+            expiresIn: configService.getOrThrow('JWT_EXPIRES_IN'),
           },
         };
       },
