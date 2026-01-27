@@ -64,7 +64,18 @@ export class UsersService {
     };
   }
 
-  async update(id: string, updateData: UpdateUserDto): Promise<ResponseType> {
+  async update(
+    id: string,
+    updateData: UpdateUserDto,
+    currentUserId: string,
+  ): Promise<ResponseType> {
+    if (id !== currentUserId) {
+      return {
+        success: false,
+        message: 'You can only update your own profile',
+      };
+    }
+
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
     }
@@ -122,7 +133,14 @@ export class UsersService {
     };
   }
 
-  async remove(id: string): Promise<ResponseType> {
+  async remove(id: string, currentUserId: string): Promise<ResponseType> {
+    if (id !== currentUserId) {
+      return {
+        success: false,
+        message: 'You can only delete your own profile',
+      };
+    }
+
     const result = await this.userModel.findByIdAndDelete(id).exec();
 
     if (!result) {
